@@ -1,7 +1,7 @@
 # OnStage
  
 
-A data souce app thats gelps startups find investors,audience etc.
+A data souce app thats helps startups find investors,audience etc.
 
 ---
 ## Requirements
