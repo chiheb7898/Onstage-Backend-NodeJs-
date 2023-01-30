@@ -3,20 +3,31 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const saltRounds = 10;
-const socketio = require('socket.io');
-const http = require('http');
+//const socketio = require('socket.io');
+//const http = require('http');
 //const formatMessage = require('./models/Message');
-const app = express()
+//const app = express()
 var multer, storage, path, crypto;
 multer = require('multer')
 path = require('path');
 crypto = require('crypto');
 
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+
 const hostname = 'localhost';
 const port = 8000;
 const {mongoUrl} = require('./keys')
 
+var clients = {}; 
+
+app.get('/', function(req, res){
+  res.send('server is running');
+});
+
 require('./models/Chat');  
+require('./models/Story');  
 require('./models/User')
 require('./models/Post')
 require('./models/Todo')
@@ -28,14 +39,11 @@ app.use(require('./routes/userRoutes'))
 app.use(require('./routes/chatRoutes'))
 app.use(require('./routes/todoRoutes'))
 app.use(require('./routes/startupRoutes'))
+app.use(require('./routes/storyRoutes'))
 app.use(express.static('public'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const Chat =  mongoose.model("Chat")
 
-const SocketServer = require('websocket').server
-const server = http.createServer((req, res) => {})
-server.listen(3000, ()=>{
-  console.log("Listening on port 3000...")
-})
 var fs = require('fs');
 
 storage = multer.diskStorage({
@@ -73,11 +81,11 @@ app.get('/uploads/:upload', function (req, res){
 
 });
 
-wsServer = new SocketServer({httpServer:server})
+//wsServer = new SocketServer({httpServer:server})
 
 const connections = []
 
-wsServer.on('request', (req) => {
+/*wsServer.on('request', (req) => {
     const connection = req.accept()
     console.log('new connection')
     connections.push(connection)
@@ -106,7 +114,37 @@ wsServer.on('request', (req) => {
         connections.splice(connections.indexOf(connection), 1)
     })
 
-})
+})*/
+var io = require('socket.io')(http);
+
+io.on("connection", function (client) {  
+  client.on("currentAmount", function(){
+    client.emit("Eiii", "You have connected to the server.");
+  })
+  client.on("join", function(name){
+    console.log("Joined: " + name);
+      clients[client.id] = name;
+      client.emit("joined", true);
+      client.emit("update", "You have connected to the server.");
+      client.broadcast.emit("update", name + " has joined the server.")
+  });
+
+  client.on("send", function(msg){
+    console.log("Message: " + msg);
+      client.emit("chat", clients[client.id], msg);
+      client.broadcast.emit("chat", clients[client.id], msg);
+  });
+
+  client.on("disconnect", function(){
+    console.log("Disconnect");
+      io.emit("update", clients[client.id] + " has left the server.");
+      delete clients[client.id];
+  });
+
+  client.on("getconnected",function(){
+    io.emit(clients)
+  })
+});
 
 mongoose.connect(mongoUrl,{
     useFindAndModify: false,
@@ -122,6 +160,10 @@ mongoose.connection.on("error",(err)=>{
 })
 
     
-app.listen(port,hostname,() =>{
+/*app.listen(port,hostname,() =>{
 console.log("server running"+port)
-})
+})*/
+
+http.listen(process.env.PORT || port, function(){
+  console.log('listening...');
+});

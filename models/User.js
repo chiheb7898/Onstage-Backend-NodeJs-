@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const {ObjectId} = mongoose.Schema.Types
 
 const userSchema = new mongoose.Schema({
     name:String,
@@ -13,7 +14,8 @@ const userSchema = new mongoose.Schema({
     educationTitle:String,
     school:String,
     student:String,
-    picture:String
+    picture:String,
+    savedPosts:[{type:ObjectId,unique:true,ref:"Post"}],
 
 })
 

@@ -95,9 +95,7 @@ router.post('/verifCode',async (req,res)=>{
     console.log(user._id);
     res.json({
       found: "found",
-      userId: user._id,
-      picture:user.picture,
-      name:user.name
+      user: user,
   })
     
   }
@@ -113,21 +111,23 @@ router.post('/verifCode',async (req,res)=>{
 })
 
 //signup 
-router.post('/signup',async(req,res)=>{
+const {upload} = require('../middleware/upload');
+router.post('/signup',upload.single('photo'),async(req,res)=>{
   try{
   const user = new User({
     name:req.body.name,
     email:req.body.email,
-    picture:req.body.picture  
+    picture:`http://localhost:8000/${req.file.path}` 
     })
     await user.save()
-    .then(data=>{
-       console.log(data)
-       res.send(data)
-
+    .then(user=>{
+      console.log(user)
+      res.json({user})
+       //res.send(user)
     })
   }
   catch(err){
+    console.log(err)
     return res.status(422).send(err)
 }
   

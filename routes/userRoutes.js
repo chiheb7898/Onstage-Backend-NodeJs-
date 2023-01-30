@@ -51,7 +51,7 @@ router.post('/updateInfo',(req,res)=>{
         currentlyWorking:req.body.currentlyWorking,
         educationTitle:req.body.educationTitle,
         school:req.body.school,
-        student:req.body.student
+        student:req.body.student,
         
     }).then(data=>{
         console.log(data)
@@ -62,9 +62,75 @@ router.post('/updateInfo',(req,res)=>{
     })
   
   })
+//update photo
+  const {upload} = require('../middleware/upload');
+  router.put('/updatephoto',upload.single('photo'),async(req,res)=>{
+      let userId=req.body._id
+        User.findByIdAndUpdate(req.body._id,{
+      picture:`http://localhost:8000/${req.file.path}` 
+      }).then(()=>{
+        usertmp=User.findById(userId).then((exuser)=>{
+            res.json(exuser)
+        })
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+  
+  })
+      /*.then(data=>{
+            usertmp=User.findOne(result._id)
+            res.json(usertmp)           
+        }.catch(err=>{
+            console.log(err)
+          })
+            
+        })*/
 
 
+  router.put('/addFavourite',(req,res)=>{
 
+    User.findByIdAndUpdate(req.body.user_id,{
+        $push:{savedPosts:req.body.postId}
+    },{
+        new:true
+    }).exec((err,result)=>{
+        if(err){
+            return res.status(422).json({error:err})
+        }else{
+            res.json({savedposts:result.savedPosts})
+        }
+    })
+})
+
+router.put('/removeFavourite',(req,res)=>{
+    User.findByIdAndUpdate(req.body.user_id,{
+        $pull:{savedPosts:req.body.postId}
+    },{
+        new:true
+    }).exec((err,result)=>{
+        if(err){
+            return res.status(422).json({error:err})
+        }else{
+           // res.json({savedposts: user.savedPosts})
+           res.json({savedposts:result.savedPosts})
+        }
+    })
+})
+
+router.post('/userbookmarks',async(req,res)=>{
+    const {_id} = req.body
+    const user = await User.findOne({_id}).populate('savedPosts')
+    try{
+      res.json({
+          user
+  })
+    }
+    catch(err){
+        console.log(err)
+    return res.status(422).send({error :"error"})
+}
+})
 
 
 

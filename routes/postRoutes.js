@@ -31,8 +31,9 @@ router.post('/searchPosts',(req,res,next)=>{
 
 })
 
-router.post('/createpost',async(req,res)=>{
-    const {title,description,pic} = req.body 
+const {upload} = require('../middleware/upload');
+router.post('/createpost',upload.single('photo'),async(req,res)=>{
+    const {title,description} = req.body 
     if(!title ){
       return  res.status(422).json({error:"Plase add all the fields"})
     }
@@ -40,11 +41,11 @@ router.post('/createpost',async(req,res)=>{
     const post = new Post({
         title:req.body.title,
         description:req.body.description,
-        photo:req.body.photo,
+        photo:`http://localhost:8000/${req.file.path}`,
         postedBy:req.body.postedBy
     })
-    await post.save()
-    .then(result=>{
+    console.log(post.photo)
+    await post.save().then(result=>{
         console.log(result)
         res.json({post:result})
     })
@@ -100,6 +101,7 @@ router.post('/getComments',async(req,res)=>{
   })
     }
     catch(err){
+        console.log(err)
     return res.status(422).send({error :"error"})
 }
 })
@@ -120,6 +122,7 @@ router.put('/addComment',(req,res)=>{
     .populate("postedBy","_id name")
     .exec((err,result)=>{
         if(err){
+            console.log(err)
             return res.status(422).json({error:err})
         }else{
            console.log(result)
